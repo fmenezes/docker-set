@@ -13,7 +13,7 @@ var rmCmd = &cobra.Command{
 	Long: `Removes an environment entry from the list. Example:
 
 docker-set rm test`,
-  Args: cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("rm called", args)
 	},
