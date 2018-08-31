@@ -9,7 +9,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use: "docker-set",
 	Long: `docker-set is a simple tool to switch between docker environments,
-    virtual machines, remote hosts and docker for mac`,
+    virtual machines and docker for mac`,
 }
 
 func Execute() {

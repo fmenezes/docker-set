@@ -22,9 +22,9 @@ func (driver VagrantDriver) Name() string {
 }
 
 func (driver VagrantDriver) Add(entry types.NewEnvironmentEntry) error {
-	info, err := os.Stat(*entry.Location)
+	info, err := os.Stat(entry.Location)
 	if err != nil {
-		return fmt.Errorf("Can not access %s", *entry.Location)
+		return fmt.Errorf("Can not access %s", entry.Location)
 	}
 
 	if info.IsDir() {
@@ -32,9 +32,9 @@ func (driver VagrantDriver) Add(entry types.NewEnvironmentEntry) error {
 	}
 
 	return storage.Save(storage.Entry{
-		Name:     *entry.Name,
-		Driver:   *entry.Driver,
-		Location: *entry.Location,
+		Name:     entry.Name,
+		Driver:   entry.Driver,
+		Location: entry.Location,
 	})
 }
 
@@ -52,9 +52,9 @@ func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
 		}
 
 		list = append(list, types.EnvironmentEntry{
-			Name:   &item.Name,
+			Name:   item.Name,
 			Active: false,
-			Driver: &driver.name,
+			Driver: driver.name,
 			State:  &state,
 			URL:    nil,
 		})
