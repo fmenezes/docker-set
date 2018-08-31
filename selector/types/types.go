@@ -1,13 +1,22 @@
 package types
 
 type Driver interface {
-	List() ([]EnvironmentEntry, error)
+  Name() string
+  Add(NewEnvironmentEntry) error
+  List() ([]EnvironmentEntry, error)
+}
+
+type NewEnvironmentEntry struct {
+  Name     *string
+  Driver   *string
+  Location *string
 }
 
 type EnvironmentEntry struct {
-	Name   *string
-	Active bool
-	Source *string
-	State  *string
-	URL    *string
+  Name     *string
+  Driver   *string
+  Location *string
+  Active   bool
+  State    *string
+  URL      *string
 }
