@@ -3,6 +3,7 @@ package types
 type Driver interface {
 	Name() string
 	Add(NewEnvironmentEntry) error
+	Remove(NewEnvironmentEntry) error
 	List() ([]EnvironmentEntry, error)
 }
 

@@ -31,7 +31,15 @@ func (driver VagrantDriver) Add(entry types.NewEnvironmentEntry) error {
 		return errors.New("Directories are not supported, pass the Vagrantfile's full path")
 	}
 
-	return storage.Save(storage.Entry{
+	return storage.Add(storage.Entry{
+		Name:     entry.Name,
+		Driver:   entry.Driver,
+		Location: entry.Location,
+	})
+}
+
+func (driver VagrantDriver) Remove(entry types.NewEnvironmentEntry) error {
+	return storage.Remove(storage.Entry{
 		Name:     entry.Name,
 		Driver:   entry.Driver,
 		Location: entry.Location,
@@ -52,11 +60,12 @@ func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
 		}
 
 		list = append(list, types.EnvironmentEntry{
-			Name:   item.Name,
-			Active: false,
-			Driver: driver.name,
-			State:  &state,
-			URL:    nil,
+			Name:     item.Name,
+			Active:   false,
+			Driver:   driver.name,
+			State:    &state,
+			URL:      nil,
+			Location: item.Location,
 		})
 	}
 

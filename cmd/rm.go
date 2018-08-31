@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/fmenezes/docker-set/selector"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +17,11 @@ var rmCmd = &cobra.Command{
 docker-set rm test`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("rm called", args)
+		err := selector.Remove(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Done")
 	},
 }
 

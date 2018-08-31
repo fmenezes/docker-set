@@ -14,6 +14,10 @@ func (driver DockerForMacDriver) Name() string {
 	return driver.name
 }
 
+func (driver DockerForMacDriver) Remove(entry types.NewEnvironmentEntry) error {
+	return errors.New("Not Supported")
+}
+
 func (driver DockerForMacDriver) Add(entry types.NewEnvironmentEntry) error {
 	return errors.New("Not Supported")
 }

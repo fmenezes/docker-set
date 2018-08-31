@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/fmenezes/docker-set/selector"
@@ -44,6 +45,7 @@ docker-env add test vagrant /path/to/Vagrantfile
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("Done")
 	},
 }
 

@@ -20,6 +20,10 @@ func (driver DockerMachineDriver) Add(entry types.NewEnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
+func (driver DockerMachineDriver) Remove(entry types.NewEnvironmentEntry) error {
+	return errors.New("Not Supported")
+}
+
 func (driver DockerMachineDriver) List() ([]types.EnvironmentEntry, error) {
 	cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}},{{.Active}},{{.URL}}")
 

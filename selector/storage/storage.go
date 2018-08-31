@@ -3,6 +3,7 @@ package storage
 import "encoding/json"
 import "io/ioutil"
 import "os"
+import "errors"
 import "path"
 import "os/user"
 
@@ -20,24 +21,53 @@ func getStorageFile() (string, error) {
 	return path.Join(usr.HomeDir, ".docker-set"), nil
 }
 
-func Save(entry Entry) error {
-	storageFile, err := getStorageFile()
-	if err != nil {
-		return err
-	}
-
+func Add(entry Entry) error {
 	list, err := Load()
 	if err != nil {
 		return err
 	}
 
 	list = append(list, entry)
-	json, err := marshal(list)
+
+	return Save(list)
+}
+
+func Remove(entry Entry) error {
+	list, err := Load()
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(storageFile, json, 0644)
+	found := false
+
+	newList := make([]Entry, 0)
+	for _, item := range list {
+		if entry.Name == item.Name && entry.Driver == item.Driver && entry.Location == item.Location {
+			found = true
+		} else {
+			newList = append(newList, item)
+		}
+	}
+
+	if !found {
+		return errors.New("Entry not found")
+	}
+
+	return Save(newList)
+}
+
+func Save(list []Entry) error {
+	storageFile, err := getStorageFile()
+	if err != nil {
+		return err
+	}
+
+	data, err := marshal(list)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(storageFile, data, 0644)
 }
 
 func marshal(data []Entry) ([]byte, error) {
