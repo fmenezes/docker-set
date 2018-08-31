@@ -1,6 +1,7 @@
 package selector
 
 import "fmt"
+import "os"
 
 import "github.com/fmenezes/docker-set/selector/types"
 import "github.com/fmenezes/docker-set/selector/drivers"
@@ -49,6 +50,15 @@ func findEntry(name string) (types.EnvironmentEntry, error) {
 		}
 	}
 	return types.EnvironmentEntry{}, fmt.Errorf("'%s' not found", name)
+}
+
+func Selected() *string {
+	var result *string = nil
+	val, ok := os.LookupEnv("DOCKER_SET_MACHINE")
+	if ok {
+		result = &val
+	}
+	return result
 }
 
 func Env(entry string) (map[string]*string, error) {
