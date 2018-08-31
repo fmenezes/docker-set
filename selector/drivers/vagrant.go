@@ -1,6 +1,7 @@
 package drivers
 
 import "os"
+import "strings"
 import "fmt"
 import "os/exec"
 import "encoding/csv"
@@ -47,7 +48,24 @@ func (driver VagrantDriver) Remove(entry types.NewEnvironmentEntry) error {
 }
 
 func (driver VagrantDriver) Env(entry types.EnvironmentEntry) (map[string]*string, error) {
-	return nil, errors.New("Not Supported")
+	if *entry.State != "running" {
+		return nil, fmt.Errorf("vm is not running")
+	}
+
+	ip, err := getVagrantIp(entry.Location)
+	if err != nil {
+		return nil, err
+	}
+	host := fmt.Sprintf("tcp://%s:2375", ip)
+
+	env := make(map[string]*string)
+	env["DOCKER_SET_MACHINE"] = &entry.Name
+	env["DOCKER_HOST"] = &host
+	env["DOCKER_TLS_VERIFY"] = nil
+	env["DOCKER_CERT_PATH"] = nil
+	env["DOCKER_MACHINE_NAME"] = nil
+
+	return env, nil
 }
 
 func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
@@ -58,7 +76,7 @@ func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
 
 	list := make([]types.EnvironmentEntry, 0)
 	for _, item := range data {
-		state, err := getVagrantState(path.Dir(item.Location))
+		state, err := getVagrantState(item.Location)
 		if err != nil {
 			return nil, err
 		}
@@ -74,9 +92,21 @@ func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
 	return list, nil
 }
 
-func getVagrantState(dir string) (string, error) {
+func getVagrantIp(location string) (string, error) {
+	cmd := exec.Command("vagrant", "ssh", "-c", "hostname -I | cut -d' ' -f2")
+	cmd.Dir = path.Dir(location)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Replace(string(output), "\n", "", 1), nil
+}
+
+func getVagrantState(location string) (string, error) {
 	cmd := exec.Command("vagrant", "status", "--machine-readable")
-	cmd.Dir = dir
+	cmd.Dir = path.Dir(location)
 
 	output, err := cmd.Output()
 	if err != nil {
