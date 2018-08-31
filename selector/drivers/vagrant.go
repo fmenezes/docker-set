@@ -46,6 +46,10 @@ func (driver VagrantDriver) Remove(entry types.NewEnvironmentEntry) error {
 	})
 }
 
+func (driver VagrantDriver) Env(entry types.EnvironmentEntry) (map[string]*string, error) {
+	return nil, errors.New("Not Supported")
+}
+
 func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
 	data, err := storage.Load()
 	if err != nil {
@@ -61,10 +65,8 @@ func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
 
 		list = append(list, types.EnvironmentEntry{
 			Name:     item.Name,
-			Active:   false,
 			Driver:   driver.name,
 			State:    &state,
-			URL:      nil,
 			Location: item.Location,
 		})
 	}

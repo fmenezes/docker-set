@@ -5,6 +5,7 @@ type Driver interface {
 	Add(NewEnvironmentEntry) error
 	Remove(NewEnvironmentEntry) error
 	List() ([]EnvironmentEntry, error)
+	Env(EnvironmentEntry) (map[string]*string, error)
 }
 
 type NewEnvironmentEntry struct {
@@ -17,7 +18,5 @@ type EnvironmentEntry struct {
 	Name     string
 	Driver   string
 	Location string
-	Active   bool
 	State    *string
-	URL      *string
 }

@@ -16,6 +16,10 @@ func (driver DockerMachineDriver) Name() string {
 	return driver.name
 }
 
+func (driver DockerMachineDriver) Env(entry types.EnvironmentEntry) (map[string]*string, error) {
+	return nil, errors.New("Not Supported")
+}
+
 func (driver DockerMachineDriver) Add(entry types.NewEnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
@@ -25,7 +29,7 @@ func (driver DockerMachineDriver) Remove(entry types.NewEnvironmentEntry) error 
 }
 
 func (driver DockerMachineDriver) List() ([]types.EnvironmentEntry, error) {
-	cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}},{{.Active}},{{.URL}}")
+	cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}}")
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -45,8 +49,6 @@ func (driver DockerMachineDriver) List() ([]types.EnvironmentEntry, error) {
 			Name:   record[0],
 			State:  &record[1],
 			Driver: driver.name,
-			Active: record[2] == "*",
-			URL:    &record[3],
 		})
 	}
 

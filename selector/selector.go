@@ -38,30 +38,45 @@ func Add(entry types.NewEnvironmentEntry) error {
 	return selectedDriver.Add(entry)
 }
 
-func Remove(entry string) error {
+func findEntry(name string) (types.EnvironmentEntry, error) {
 	list, err := List()
 	if err != nil {
-		return err
+		return types.EnvironmentEntry{}, err
 	}
-	var found *types.NewEnvironmentEntry = nil
 	for _, item := range list {
-		if item.Name == entry {
-			found = &types.NewEnvironmentEntry{
-				Name:     item.Name,
-				Driver:   item.Driver,
-				Location: item.Location,
-			}
-			break
+		if item.Name == name {
+			return item, nil
 		}
 	}
-	if found == nil {
-		return fmt.Errorf("'%s' not found", entry)
+	return types.EnvironmentEntry{}, fmt.Errorf("'%s' not found", name)
+}
+
+func Env(entry string) (map[string]*string, error) {
+	found, err := findEntry(entry)
+	if err != nil {
+		return nil, err
+	}
+	selectedDriver, err := selectDriver(found.Driver)
+	if err != nil {
+		return nil, err
+	}
+	return selectedDriver.Env(found)
+}
+
+func Remove(entry string) error {
+	found, err := findEntry(entry)
+	if err != nil {
+		return err
 	}
 	selectedDriver, err := selectDriver(found.Driver)
 	if err != nil {
 		return err
 	}
-	return selectedDriver.Remove(*found)
+	return selectedDriver.Remove(types.NewEnvironmentEntry{
+		Name:     found.Name,
+		Driver:   found.Driver,
+		Location: found.Location,
+	})
 }
 
 func List() ([]types.EnvironmentEntry, error) {

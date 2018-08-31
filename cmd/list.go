@@ -20,12 +20,12 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		tmpl, err := template.New("main").Parse("{{if .Active}}*{{end}}\t{{.Name}}\t{{.Driver}}\t{{if not .State}}Unknown{{else}}{{.State}}{{end}}\t{{.URL}}\n")
+		tmpl, err := template.New("main").Parse(" \t{{.Name}}\t{{.Driver}}\t{{if not .State}}Unknown{{else}}{{.State}}{{end}}\n")
 		if err != nil {
 			log.Fatal(err)
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-		fmt.Fprintln(w, "ACTIVE\tNAME\tDRIVER\tSTATE\tURL")
+		fmt.Fprintln(w, "ACTIVE\tNAME\tDRIVER\tSTATE")
 		for _, entry := range list {
 			tmpl.Execute(w, entry)
 		}
