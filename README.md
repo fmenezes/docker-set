@@ -43,3 +43,7 @@ $ docker-set rm test
 
 Done
 ```
+
+## Notes
+- When adding or removing a vagrant machine a file named `$HOME/.docker-set` will be stored.
+
