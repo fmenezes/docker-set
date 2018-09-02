@@ -1,4 +1,4 @@
-package drivers
+package vagrant
 
 import "os"
 import "strings"
@@ -9,21 +9,25 @@ import "bytes"
 import "errors"
 import "path"
 
-import "github.com/fmenezes/docker-set/selector/types"
-import "github.com/fmenezes/docker-set/selector/storage"
+import "github.com/fmenezes/docker-set/selector/common"
 
 const VAGRANT = "vagrant"
 
 type VagrantDriver struct {
-	name string
+	name  string
+	Store common.Storage
 }
 
 func (driver VagrantDriver) Name() string {
 	return driver.name
 }
 
-func (driver VagrantDriver) Add(entry types.NewEnvironmentEntry) error {
-	info, err := os.Stat(entry.Location)
+func (driver VagrantDriver) Add(entry common.EnvironmentEntry) error {
+	if entry.Location == nil {
+		return fmt.Errorf("No file provided")
+	}
+
+	info, err := os.Stat(*entry.Location)
 	if err != nil {
 		return fmt.Errorf("Can not access %s", entry.Location)
 	}
@@ -32,27 +36,23 @@ func (driver VagrantDriver) Add(entry types.NewEnvironmentEntry) error {
 		return errors.New("Directories are not supported, pass the Vagrantfile's full path")
 	}
 
-	return storage.Add(storage.Entry{
-		Name:     entry.Name,
-		Driver:   entry.Driver,
-		Location: entry.Location,
-	})
+	return driver.Store.Add(entry)
 }
 
-func (driver VagrantDriver) Remove(entry types.NewEnvironmentEntry) error {
-	return storage.Remove(storage.Entry{
-		Name:     entry.Name,
-		Driver:   entry.Driver,
-		Location: entry.Location,
-	})
+func (driver VagrantDriver) Remove(entry common.EnvironmentEntry) error {
+	return driver.Store.Remove(entry)
 }
 
-func (driver VagrantDriver) Env(entry types.EnvironmentEntry) (map[string]*string, error) {
+func (driver VagrantDriver) Env(entry common.EnvironmentEntryWithState) (map[string]*string, error) {
 	if *entry.State != "running" {
 		return nil, fmt.Errorf("vm is not running")
 	}
 
-	ip, err := getVagrantIp(entry.Location)
+	if entry.Location == nil {
+		return nil, fmt.Errorf("No file provided")
+	}
+
+	ip, err := getVagrantIp(*entry.Location)
 	if err != nil {
 		return nil, err
 	}
@@ -68,24 +68,30 @@ func (driver VagrantDriver) Env(entry types.EnvironmentEntry) (map[string]*strin
 	return env, nil
 }
 
-func (driver VagrantDriver) List() ([]types.EnvironmentEntry, error) {
-	data, err := storage.Load()
+func (driver VagrantDriver) List() ([]common.EnvironmentEntryWithState, error) {
+	data, err := driver.Store.Load()
 	if err != nil {
 		return nil, err
 	}
 
-	list := make([]types.EnvironmentEntry, 0)
+	list := make([]common.EnvironmentEntryWithState, 0)
 	for _, item := range data {
-		state, err := getVagrantState(item.Location)
+		if item.Location == nil {
+			return nil, fmt.Errorf("No file provided")
+		}
+
+		state, err := getVagrantState(*item.Location)
 		if err != nil {
 			return nil, err
 		}
 
-		list = append(list, types.EnvironmentEntry{
-			Name:     item.Name,
-			Driver:   driver.name,
-			State:    &state,
-			Location: item.Location,
+		list = append(list, common.EnvironmentEntryWithState{
+			EnvironmentEntry: common.EnvironmentEntry{
+				Name:     item.Name,
+				Driver:   driver.name,
+				Location: item.Location,
+			},
+			State: &state,
 		})
 	}
 
@@ -129,8 +135,9 @@ func getVagrantState(location string) (string, error) {
 	return "none", nil
 }
 
-func NewVagrantDriver() types.Driver {
-	return VagrantDriver{
-		name: VAGRANT,
+func NewDriver(store common.Storage) common.Driver {
+	return &VagrantDriver{
+		name:  VAGRANT,
+		Store: store,
 	}
 }

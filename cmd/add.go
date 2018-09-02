@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/fmenezes/docker-set/selector"
-	"github.com/fmenezes/docker-set/selector/types"
+	"github.com/fmenezes/docker-set/selector/common"
 	"github.com/spf13/cobra"
 )
 
@@ -37,10 +37,15 @@ docker-env add test vagrant /path/to/Vagrantfile
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		err := selector.Add(types.NewEnvironmentEntry{
+		sel, err := selector.NewSelector()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = sel.Add(common.EnvironmentEntry{
 			Name:     args[0],
 			Driver:   args[1],
-			Location: args[2],
+			Location: &args[2],
 		})
 		if err != nil {
 			log.Fatal(err)

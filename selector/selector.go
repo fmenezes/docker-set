@@ -3,20 +3,36 @@ package selector
 import "fmt"
 import "os"
 
-import "github.com/fmenezes/docker-set/selector/types"
-import "github.com/fmenezes/docker-set/selector/drivers"
+import "github.com/fmenezes/docker-set/selector/common"
+import "github.com/fmenezes/docker-set/selector/drivers/docker_for_mac"
+import "github.com/fmenezes/docker-set/selector/drivers/docker_machine"
+import "github.com/fmenezes/docker-set/selector/drivers/vagrant"
+import "github.com/fmenezes/docker-set/selector/storage"
 
-var driverList = make([]types.Driver, 0)
-
-func init() {
-	driverList = append(driverList, drivers.NewDockerForMacDriver())
-	driverList = append(driverList, drivers.NewDockerMachineDriver())
-	driverList = append(driverList, drivers.NewVagrantDriver())
+type Selector struct {
+	drivers []common.Driver
 }
 
-func selectDriver(driver string) (types.Driver, error) {
-	var selectedDriver *types.Driver = nil
-	for _, item := range driverList {
+func NewSelector() (*Selector, error) {
+	selector := Selector{
+		drivers: make([]common.Driver, 0),
+	}
+
+	selector.drivers = append(selector.drivers, docker_for_mac.NewDriver())
+	selector.drivers = append(selector.drivers, docker_machine.NewDriver())
+
+	store, err := storage.NewFileStorage()
+	if err != nil {
+		return nil, err
+	}
+	selector.drivers = append(selector.drivers, vagrant.NewDriver(*store))
+
+	return &selector, nil
+}
+
+func (s Selector) selectDriver(driver string) (common.Driver, error) {
+	var selectedDriver *common.Driver = nil
+	for _, item := range s.drivers {
 		if item.Name() == driver {
 			selectedDriver = &item
 			break
@@ -30,8 +46,8 @@ func selectDriver(driver string) (types.Driver, error) {
 	return *selectedDriver, nil
 }
 
-func Add(entry types.NewEnvironmentEntry) error {
-	selectedDriver, err := selectDriver(entry.Driver)
+func (s Selector) Add(entry common.EnvironmentEntry) error {
+	selectedDriver, err := s.selectDriver(entry.Driver)
 	if err != nil {
 		return err
 	}
@@ -39,20 +55,20 @@ func Add(entry types.NewEnvironmentEntry) error {
 	return selectedDriver.Add(entry)
 }
 
-func findEntry(name string) (types.EnvironmentEntry, error) {
-	list, err := List()
+func (s Selector) findEntry(name string) (*common.EnvironmentEntryWithState, error) {
+	list, err := s.List()
 	if err != nil {
-		return types.EnvironmentEntry{}, err
+		return nil, err
 	}
 	for _, item := range list {
 		if item.Name == name {
-			return item, nil
+			return &item, nil
 		}
 	}
-	return types.EnvironmentEntry{}, fmt.Errorf("'%s' not found", name)
+	return nil, fmt.Errorf("'%s' not found", name)
 }
 
-func Selected() *string {
+func (s Selector) Selected() *string {
 	var result *string = nil
 	val, ok := os.LookupEnv("DOCKER_SET_MACHINE")
 	if ok {
@@ -61,38 +77,34 @@ func Selected() *string {
 	return result
 }
 
-func Env(entry string) (map[string]*string, error) {
-	found, err := findEntry(entry)
+func (s Selector) Env(entry string) (map[string]*string, error) {
+	found, err := s.findEntry(entry)
 	if err != nil {
 		return nil, err
 	}
-	selectedDriver, err := selectDriver(found.Driver)
+	selectedDriver, err := s.selectDriver(found.Driver)
 	if err != nil {
 		return nil, err
 	}
-	return selectedDriver.Env(found)
+	return selectedDriver.Env(*found)
 }
 
-func Remove(entry string) error {
-	found, err := findEntry(entry)
+func (s Selector) Remove(entry string) error {
+	found, err := s.findEntry(entry)
 	if err != nil {
 		return err
 	}
-	selectedDriver, err := selectDriver(found.Driver)
+	selectedDriver, err := s.selectDriver(found.Driver)
 	if err != nil {
 		return err
 	}
-	return selectedDriver.Remove(types.NewEnvironmentEntry{
-		Name:     found.Name,
-		Driver:   found.Driver,
-		Location: found.Location,
-	})
+	return selectedDriver.Remove(found.EnvironmentEntry)
 }
 
-func List() ([]types.EnvironmentEntry, error) {
-	list := make([]types.EnvironmentEntry, 0)
+func (s Selector) List() ([]common.EnvironmentEntryWithState, error) {
+	list := make([]common.EnvironmentEntryWithState, 0)
 
-	for _, driver := range driverList {
+	for _, driver := range s.drivers {
 		entryList, err := driver.List()
 		if err != nil {
 			return nil, err
