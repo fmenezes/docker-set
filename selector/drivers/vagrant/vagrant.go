@@ -29,14 +29,14 @@ func (driver VagrantDriver) Add(entry common.EnvironmentEntry) error {
 
 	info, err := os.Stat(*entry.Location)
 	if err != nil {
-		return fmt.Errorf("Can not access %s", entry.Location)
+		return fmt.Errorf("Can not access %s", *entry.Location)
 	}
 
 	if info.IsDir() {
 		return errors.New("Directories are not supported, pass the Vagrantfile's full path")
 	}
 
-	return driver.Store.Add(entry)
+	return driver.Store.Append(entry)
 }
 
 func (driver VagrantDriver) Remove(entry common.EnvironmentEntry) error {

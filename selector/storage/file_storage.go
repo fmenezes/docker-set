@@ -35,7 +35,7 @@ func getStorageFile() (string, error) {
 	return path.Join(usr.HomeDir, ".docker-set"), nil
 }
 
-func (s FileStorage) Add(entry common.EnvironmentEntry) error {
+func (s FileStorage) Append(entry common.EnvironmentEntry) error {
 	list, err := s.Load()
 	if err != nil {
 		return err
