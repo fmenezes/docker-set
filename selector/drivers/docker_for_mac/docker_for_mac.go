@@ -1,18 +1,20 @@
+// docker_for_mac package contains Docker for Mac driver implementation
 package docker_for_mac
 
 import "errors"
 import "github.com/fmenezes/docker-set/selector/common"
 
-const DOCKERFORMAC = "docker-for-mac"
-
+// Holds common.Driver interface implementation for Docker for Mac
 type DockerForMacDriver struct {
 	name string
 }
 
+// Returns "docker-for-mac" always
 func (driver DockerForMacDriver) Name() string {
 	return driver.name
 }
 
+// Returns environment variables for Docker for Mac
 func (driver DockerForMacDriver) Env(entry common.EnvironmentEntryWithState) (map[string]*string, error) {
 	env := make(map[string]*string)
 
@@ -25,14 +27,17 @@ func (driver DockerForMacDriver) Env(entry common.EnvironmentEntryWithState) (ma
 	return env, nil
 }
 
+// Not Supported
 func (driver DockerForMacDriver) Remove(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
+// Not Supported
 func (driver DockerForMacDriver) Add(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
+// Lists always one entry representing Docker for Mac
 func (driver DockerForMacDriver) List() ([]common.EnvironmentEntryWithState, error) {
 	list := make([]common.EnvironmentEntryWithState, 0)
 	list = append(list, driver.getDockerForMacEntry())
@@ -49,8 +54,9 @@ func (driver DockerForMacDriver) getDockerForMacEntry() common.EnvironmentEntryW
 	}
 }
 
+// Returns an instance of DockerForMacDriver struct
 func NewDriver() common.Driver {
 	return DockerForMacDriver{
-		name: DOCKERFORMAC,
+		name: "docker-for-mac",
 	}
 }
