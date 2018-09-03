@@ -1,4 +1,4 @@
-package drivers
+package docker_machine
 
 import "os/exec"
 import "encoding/json"
@@ -7,7 +7,7 @@ import "bytes"
 import "fmt"
 import "strings"
 import "errors"
-import "github.com/fmenezes/docker-set/selector/types"
+import "github.com/fmenezes/docker-set/selector/common"
 
 const DOCKERMACHINE = "docker-machine"
 
@@ -21,10 +21,9 @@ type dockerMachineDetails struct {
 }
 
 type dockerMachineEnv struct {
-	DockerTlsVerify   bool    `json:"DOCKER_TLS_VERIFY"`
-	DockerCertPath    *string `json:"DOCKER_CERT_PATH"`
-	DockerMachineName string  `json:"DOCKER_MACHINE_NAME"`
-	DockerHost        string  `json:"DOCKER_HOST"`
+	dockerMachineDetails
+	DockerMachineName string `json:"DOCKER_MACHINE_NAME"`
+	DockerHost        string `json:"DOCKER_HOST"`
 }
 
 func (driver DockerMachineDriver) Name() string {
@@ -70,14 +69,16 @@ func getMachineEnv(machineName string) (dockerMachineEnv, error) {
 	}
 
 	return dockerMachineEnv{
-		DockerTlsVerify:   details.DockerTlsVerify,
-		DockerCertPath:    details.DockerCertPath,
+		dockerMachineDetails: dockerMachineDetails{
+			DockerTlsVerify: details.DockerTlsVerify,
+			DockerCertPath:  details.DockerCertPath,
+		},
 		DockerMachineName: machineName,
 		DockerHost:        host,
 	}, nil
 }
 
-func (driver DockerMachineDriver) Env(entry types.EnvironmentEntry) (map[string]*string, error) {
+func (driver DockerMachineDriver) Env(entry common.EnvironmentEntryWithState) (map[string]*string, error) {
 	if *entry.State != "Running" {
 		return nil, fmt.Errorf("vm is not running")
 	}
@@ -101,15 +102,15 @@ func (driver DockerMachineDriver) Env(entry types.EnvironmentEntry) (map[string]
 	return env, nil
 }
 
-func (driver DockerMachineDriver) Add(entry types.NewEnvironmentEntry) error {
+func (driver DockerMachineDriver) Add(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
-func (driver DockerMachineDriver) Remove(entry types.NewEnvironmentEntry) error {
+func (driver DockerMachineDriver) Remove(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
-func (driver DockerMachineDriver) List() ([]types.EnvironmentEntry, error) {
+func (driver DockerMachineDriver) List() ([]common.EnvironmentEntryWithState, error) {
 	cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}}")
 
 	output, err := cmd.Output()
@@ -124,19 +125,21 @@ func (driver DockerMachineDriver) List() ([]types.EnvironmentEntry, error) {
 		return nil, err
 	}
 
-	machines := make([]types.EnvironmentEntry, 0)
+	machines := make([]common.EnvironmentEntryWithState, 0)
 	for _, record := range records {
-		machines = append(machines, types.EnvironmentEntry{
-			Name:   record[0],
-			State:  &record[1],
-			Driver: driver.name,
+		machines = append(machines, common.EnvironmentEntryWithState{
+			EnvironmentEntry: common.EnvironmentEntry{
+				Name:   record[0],
+				Driver: driver.name,
+			},
+			State: &record[1],
 		})
 	}
 
 	return machines, nil
 }
 
-func NewDockerMachineDriver() types.Driver {
+func NewDriver() common.Driver {
 	return DockerMachineDriver{
 		name: DOCKERMACHINE,
 	}

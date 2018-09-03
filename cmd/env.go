@@ -17,7 +17,12 @@ var envCmd = &cobra.Command{
 docker-set env test`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		env, err := selector.Env(args[0])
+		sel, err := selector.NewSelector()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		env, err := sel.Env(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}

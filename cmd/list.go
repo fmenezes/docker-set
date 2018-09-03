@@ -8,12 +8,12 @@ import (
 	"text/template"
 
 	"github.com/fmenezes/docker-set/selector"
-	"github.com/fmenezes/docker-set/selector/types"
+	"github.com/fmenezes/docker-set/selector/common"
 	"github.com/spf13/cobra"
 )
 
 type activeEntry struct {
-	types.EnvironmentEntry
+	common.EnvironmentEntryWithState
 	Active bool
 }
 
@@ -22,7 +22,12 @@ var listCmd = &cobra.Command{
 	Short: "Lists all environments",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		list, err := selector.List()
+		sel, err := selector.NewSelector()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		list, err := sel.List()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -34,13 +39,13 @@ var listCmd = &cobra.Command{
 		fmt.Fprintln(w, "ACTIVE\tNAME\tDRIVER\tSTATE")
 
 		selected := ""
-		if selector.Selected() != nil {
-			selected = *selector.Selected()
+		if sel.Selected() != nil {
+			selected = *sel.Selected()
 		}
 		for _, entry := range list {
 			tmpl.Execute(w, activeEntry{
-				EnvironmentEntry: entry,
-				Active:           selected == entry.Name,
+				EnvironmentEntryWithState: entry,
+				Active: selected == entry.Name,
 			})
 		}
 		w.Flush()
