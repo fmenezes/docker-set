@@ -1,3 +1,4 @@
+// cmd package contains cli logic, reads command line arguments and respond to STDOUT
 package cmd
 
 import (
@@ -11,6 +12,7 @@ var rootCmd = &cobra.Command{
     virtual machines and docker for mac`,
 }
 
+// Executes the main cli logic
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

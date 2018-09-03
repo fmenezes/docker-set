@@ -1,3 +1,4 @@
+// docker_machine package contains docker-machine driver implementation
 package docker_machine
 
 import "os/exec"
@@ -9,8 +10,7 @@ import "strings"
 import "errors"
 import "github.com/fmenezes/docker-set/selector/common"
 
-const DOCKERMACHINE = "docker-machine"
-
+// Holds common.Driver interface implementation for docker-machine tool
 type DockerMachineDriver struct {
 	name string
 }
@@ -26,6 +26,7 @@ type dockerMachineEnv struct {
 	DockerHost        string `json:"DOCKER_HOST"`
 }
 
+// Returns "docker-machine" always
 func (driver DockerMachineDriver) Name() string {
 	return driver.name
 }
@@ -78,6 +79,8 @@ func getMachineEnv(machineName string) (dockerMachineEnv, error) {
 	}, nil
 }
 
+// Returns environment variables for docker-machine entry, similar to 'docker-machine env name'
+// can fail if docker-machine is not running
 func (driver DockerMachineDriver) Env(entry common.EnvironmentEntryWithState) (map[string]*string, error) {
 	if *entry.State != "Running" {
 		return nil, fmt.Errorf("vm is not running")
@@ -102,14 +105,17 @@ func (driver DockerMachineDriver) Env(entry common.EnvironmentEntryWithState) (m
 	return env, nil
 }
 
+// Not Supported
 func (driver DockerMachineDriver) Add(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
+// Not Supported
 func (driver DockerMachineDriver) Remove(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
 
+// Lists docker-machine boxes, similar to 'docker-machine ls'
 func (driver DockerMachineDriver) List() ([]common.EnvironmentEntryWithState, error) {
 	cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}}")
 
@@ -139,8 +145,9 @@ func (driver DockerMachineDriver) List() ([]common.EnvironmentEntryWithState, er
 	return machines, nil
 }
 
+// Returns an instance of DockerMachineDriver struct
 func NewDriver() common.Driver {
 	return DockerMachineDriver{
-		name: DOCKERMACHINE,
+		name: "docker-machine",
 	}
 }

@@ -1,3 +1,4 @@
+// selector package contains logic to manage environments for docker
 package selector
 
 import "fmt"
@@ -9,10 +10,13 @@ import "github.com/fmenezes/docker-set/selector/drivers/docker_machine"
 import "github.com/fmenezes/docker-set/selector/drivers/vagrant"
 import "github.com/fmenezes/docker-set/selector/storage"
 
+// Holds all methods to manage environments
 type Selector struct {
 	drivers []common.Driver
 }
 
+// Returns a new instance of the selector
+// can fail on when trying to create storage.FileStorage
 func NewSelector() (*Selector, error) {
 	selector := Selector{
 		drivers: make([]common.Driver, 0),
@@ -46,6 +50,8 @@ func (s Selector) selectDriver(driver string) (common.Driver, error) {
 	return *selectedDriver, nil
 }
 
+// Appends new environment into store
+// can fail when issuing driver add
 func (s Selector) Add(entry common.EnvironmentEntry) error {
 	selectedDriver, err := s.selectDriver(entry.Driver)
 	if err != nil {
@@ -68,6 +74,7 @@ func (s Selector) findEntry(name string) (*common.EnvironmentEntryWithState, err
 	return nil, fmt.Errorf("'%s' not found", name)
 }
 
+// Retrieves name of selected environment
 func (s Selector) Selected() *string {
 	var result *string = nil
 	val, ok := os.LookupEnv("DOCKER_SET_MACHINE")
@@ -77,6 +84,8 @@ func (s Selector) Selected() *string {
 	return result
 }
 
+// Retrieves environment variables for given name
+// can fail when issuing driver env
 func (s Selector) Env(entry string) (map[string]*string, error) {
 	found, err := s.findEntry(entry)
 	if err != nil {
@@ -89,6 +98,8 @@ func (s Selector) Env(entry string) (map[string]*string, error) {
 	return selectedDriver.Env(*found)
 }
 
+// Removes from store the entry corresponding given name
+// can fail when issuing driver remove
 func (s Selector) Remove(entry string) error {
 	found, err := s.findEntry(entry)
 	if err != nil {
@@ -101,6 +112,8 @@ func (s Selector) Remove(entry string) error {
 	return selectedDriver.Remove(found.EnvironmentEntry)
 }
 
+// Retrieves a list of all environments
+// can fail when issuing driver list
 func (s Selector) List() ([]common.EnvironmentEntryWithState, error) {
 	list := make([]common.EnvironmentEntryWithState, 0)
 

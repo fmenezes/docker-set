@@ -1,3 +1,4 @@
+// storage package contains implementations of common.Storage interface
 package storage
 
 import "encoding/json"
@@ -9,10 +10,14 @@ import "os/user"
 
 import "github.com/fmenezes/docker-set/selector/common"
 
+// Struct containing the operations described in common.Storage interface
 type FileStorage struct {
 	file string
 }
 
+// Retrieves a new instance of *FileStorage struct
+// data will be saved by default in $HOME/.docker-set
+// can fail if any problem happens while trying to fetch user home directory
 func NewFileStorage() (*FileStorage, error) {
 	file, err := getStorageFile()
 
@@ -35,6 +40,8 @@ func getStorageFile() (string, error) {
 	return path.Join(usr.HomeDir, ".docker-set"), nil
 }
 
+// Appends environment data into file
+// can fail on any file writing issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Append(entry common.EnvironmentEntry) error {
 	list, err := s.Load()
 	if err != nil {
@@ -46,6 +53,8 @@ func (s FileStorage) Append(entry common.EnvironmentEntry) error {
 	return s.Save(list)
 }
 
+// Removes environment data from file
+// can fail on any file writing issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Remove(entry common.EnvironmentEntry) error {
 	list, err := s.Load()
 	if err != nil {
@@ -70,6 +79,8 @@ func (s FileStorage) Remove(entry common.EnvironmentEntry) error {
 	return s.Save(newList)
 }
 
+// Stores list of environments into file
+// can fail on any file writing issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Save(list []common.EnvironmentEntry) error {
 	data, err := marshal(list)
 	if err != nil {
@@ -96,6 +107,8 @@ func unmarshal(file []byte) ([]common.EnvironmentEntry, error) {
 	return result, nil
 }
 
+// Retrieves list of environments from file
+// can fail on any file reading issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Load() ([]common.EnvironmentEntry, error) {
 	if _, err := os.Stat(s.file); os.IsNotExist(err) {
 		return make([]common.EnvironmentEntry, 0), nil
