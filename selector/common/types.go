@@ -20,7 +20,7 @@ type EnvironmentEntryWithState struct {
 }
 
 type Storage interface {
-	Add(EnvironmentEntry) error
+	Append(EnvironmentEntry) error
 	Remove(EnvironmentEntry) error
 	Load() ([]EnvironmentEntry, error)
 	Save([]EnvironmentEntry) error
