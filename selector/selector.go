@@ -51,14 +51,36 @@ func (s Selector) selectDriver(driver string) (common.Driver, error) {
 }
 
 // Appends new environment into store
-// can fail when issuing driver add
+// can fail when issuing driver add or adding the same name twice
 func (s Selector) Add(entry common.EnvironmentEntry) error {
 	selectedDriver, err := s.selectDriver(entry.Driver)
 	if err != nil {
 		return err
 	}
 
+	exists, err := s.existsEntry(entry.Name)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return fmt.Errorf("'%s' already exists", entry.Name)
+	}
+
 	return selectedDriver.Add(entry)
+}
+
+func (s Selector) existsEntry(name string) (bool, error) {
+	list, err := s.List()
+	if err != nil {
+		return false, err
+	}
+	for _, item := range list {
+		if item.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (s Selector) findEntry(name string) (*common.EnvironmentEntryWithState, error) {
