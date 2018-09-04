@@ -27,10 +27,6 @@ var listCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		list, err := sel.List()
-		if err != nil {
-			log.Fatal(err)
-		}
 		tmpl, err := template.New("main").Parse("{{if .Active}}*{{end}}\t{{.Name}}\t{{.Driver}}\t{{if not .State}}Unknown{{else}}{{.State}}{{end}}\n")
 		if err != nil {
 			log.Fatal(err)
@@ -42,7 +38,7 @@ var listCmd = &cobra.Command{
 		if sel.Selected() != nil {
 			selected = *sel.Selected()
 		}
-		for _, entry := range list {
+		for entry := range sel.List() {
 			tmpl.Execute(w, activeEntry{
 				EnvironmentEntryWithState: entry,
 				Active: selected == entry.Name,

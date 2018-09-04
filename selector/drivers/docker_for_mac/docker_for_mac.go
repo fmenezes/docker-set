@@ -47,10 +47,15 @@ func (driver DockerForMacDriver) Add(entry common.EnvironmentEntry) error {
 }
 
 // Lists always one entry representing Docker for Mac
-func (driver DockerForMacDriver) List() ([]common.EnvironmentEntryWithState, error) {
-	list := make([]common.EnvironmentEntryWithState, 0)
-	list = append(list, driver.getDockerForMacEntry())
-	return list, nil
+func (driver DockerForMacDriver) List() <-chan common.EnvironmentEntryWithState {
+	list := make(chan common.EnvironmentEntryWithState)
+
+	go func(c chan common.EnvironmentEntryWithState) {
+		c <- driver.getDockerForMacEntry()
+		close(c)
+	}(list)
+
+	return list
 }
 
 func (driver DockerForMacDriver) getDockerForMacEntry() common.EnvironmentEntryWithState {

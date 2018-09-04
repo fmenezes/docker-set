@@ -91,30 +91,35 @@ func (driver VagrantDriver) Env(entry common.EnvironmentEntryWithState) (map[str
 
 // Lists all Vagrant boxes you added,
 // can fail while retrieving Vagrant box status
-func (driver VagrantDriver) List() ([]common.EnvironmentEntryWithState, error) {
-	data, err := driver.store.Load()
-	if err != nil {
-		return nil, err
-	}
+func (driver VagrantDriver) List() <-chan common.EnvironmentEntryWithState {
+	list := make(chan common.EnvironmentEntryWithState)
 
-	list := make([]common.EnvironmentEntryWithState, 0)
-	for _, item := range data {
-		if item.Location == nil || len(*item.Location) == 0 {
-			return nil, fmt.Errorf("No location provided")
-		}
+	go func(c chan<- common.EnvironmentEntryWithState) {
+		defer close(c)
 
-		state, err := getVagrantState(*item.Location)
+		data, err := driver.store.Load()
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 
-		list = append(list, common.EnvironmentEntryWithState{
-			EnvironmentEntry: item,
-			State:            &state,
-		})
-	}
+		for _, item := range data {
+			if item.Location == nil || len(*item.Location) == 0 {
+				panic(fmt.Errorf("No location provided for %s", item.Name))
+			}
 
-	return list, nil
+			state, err := getVagrantState(*item.Location)
+			if err != nil {
+				panic(err)
+			}
+
+			c <- common.EnvironmentEntryWithState{
+				EnvironmentEntry: item,
+				State:            &state,
+			}
+		}
+	}(list)
+
+	return list
 }
 
 func getVagrantIp(location string) (string, error) {
