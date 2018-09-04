@@ -15,23 +15,37 @@ type Selector struct {
 	drivers []common.Driver
 }
 
-// Returns a new instance of the selector
+// Returns a new instance of the selector,
 // can fail on when trying to create storage.FileStorage
 func NewSelector() (*Selector, error) {
 	selector := Selector{
 		drivers: make([]common.Driver, 0),
 	}
 
-	selector.drivers = append(selector.drivers, docker_for_mac.NewDriver())
-	selector.drivers = append(selector.drivers, docker_machine.NewDriver())
+	dockerForMacDriver := docker_for_mac.NewDriver()
+	if dockerForMacDriver.IsSupported() {
+		selector.registerDriver(dockerForMacDriver)
+	}
 
-	store, err := storage.NewFileStorage()
+	dockerMachineDriver := docker_machine.NewDriver()
+	if dockerMachineDriver.IsSupported() {
+		selector.registerDriver(dockerMachineDriver)
+	}
+
+	file, err := storage.GetFilePath()
 	if err != nil {
 		return nil, err
 	}
-	selector.drivers = append(selector.drivers, vagrant.NewDriver(*store))
+	vagrantDriver := vagrant.NewDriver(storage.NewFileStorage(file))
+	if vagrantDriver.IsSupported() {
+		selector.registerDriver(vagrantDriver)
+	}
 
 	return &selector, nil
+}
+
+func (s *Selector) registerDriver(driver common.Driver) {
+	s.drivers = append(s.drivers, driver)
 }
 
 func (s Selector) selectDriver(driver string) (common.Driver, error) {
@@ -50,7 +64,7 @@ func (s Selector) selectDriver(driver string) (common.Driver, error) {
 	return *selectedDriver, nil
 }
 
-// Appends new environment into store
+// Appends new environment into store,
 // can fail when issuing driver add or adding the same name twice
 func (s Selector) Add(entry common.EnvironmentEntry) error {
 	selectedDriver, err := s.selectDriver(entry.Driver)
@@ -106,7 +120,7 @@ func (s Selector) Selected() *string {
 	return result
 }
 
-// Retrieves environment variables for given name
+// Retrieves environment variables for given name,
 // can fail when issuing driver env
 func (s Selector) Env(entry string) (map[string]*string, error) {
 	found, err := s.findEntry(entry)
@@ -134,7 +148,7 @@ func (s Selector) Remove(entry string) error {
 	return selectedDriver.Remove(found.EnvironmentEntry)
 }
 
-// Retrieves a list of all environments
+// Retrieves a list of all environments,
 // can fail when issuing driver list
 func (s Selector) List() ([]common.EnvironmentEntryWithState, error) {
 	list := make([]common.EnvironmentEntryWithState, 0)

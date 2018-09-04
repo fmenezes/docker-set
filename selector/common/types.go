@@ -13,6 +13,8 @@ type Driver interface {
 	List() ([]EnvironmentEntryWithState, error)
 	// Returns environment variables that need to be set
 	Env(EnvironmentEntryWithState) (map[string]*string, error)
+	// Checks if the driver is supported
+	IsSupported() bool
 }
 
 // Struct defining an environment

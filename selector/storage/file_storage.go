@@ -16,23 +16,15 @@ type FileStorage struct {
 }
 
 // Retrieves a new instance of *FileStorage struct
-// data will be saved by default in $HOME/.docker-set
-// can fail if any problem happens while trying to fetch user home directory
-func NewFileStorage() (*FileStorage, error) {
-	file, err := getStorageFile()
-
-	if err != nil {
-		return nil, err
-	}
-
-	store := FileStorage{
+func NewFileStorage(file string) *FileStorage {
+	return &FileStorage{
 		file: file,
 	}
-
-	return &store, nil
 }
 
-func getStorageFile() (string, error) {
+// It returns $HOME/.docker-set,
+// can fail if any problem happens while trying to fetch user home directory
+func GetFilePath() (string, error) {
 	usr, err := user.Current()
 	if err != nil {
 		return "", err
@@ -40,7 +32,7 @@ func getStorageFile() (string, error) {
 	return path.Join(usr.HomeDir, ".docker-set"), nil
 }
 
-// Appends environment data into file
+// Appends environment data into file,
 // can fail on any file writing issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Append(entry common.EnvironmentEntry) error {
 	list, err := s.Load()
@@ -53,7 +45,7 @@ func (s FileStorage) Append(entry common.EnvironmentEntry) error {
 	return s.Save(list)
 }
 
-// Removes environment data from file
+// Removes environment data from file,
 // can fail on any file writing issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Remove(entry common.EnvironmentEntry) error {
 	list, err := s.Load()
@@ -79,7 +71,7 @@ func (s FileStorage) Remove(entry common.EnvironmentEntry) error {
 	return s.Save(newList)
 }
 
-// Stores list of environments into file
+// Stores list of environments into file,
 // can fail on any file writing issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Save(list []common.EnvironmentEntry) error {
 	data, err := marshal(list)
@@ -107,7 +99,7 @@ func unmarshal(file []byte) ([]common.EnvironmentEntry, error) {
 	return result, nil
 }
 
-// Retrieves list of environments from file
+// Retrieves list of environments from file,
 // can fail on any file reading issues (e.g. permission, disk failure, data corruption, etc...)
 func (s FileStorage) Load() ([]common.EnvironmentEntry, error) {
 	if _, err := os.Stat(s.file); os.IsNotExist(err) {

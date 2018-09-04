@@ -14,15 +14,27 @@ import "github.com/fmenezes/docker-set/selector/common"
 
 // Holds common.Driver interface implementation for Vagrant
 type VagrantDriver struct {
-	// Storage for Vagrant box list
-	Store common.Storage
+	store common.Storage
+	name  string
+}
 
-	name string
+// Returns the store currently in use
+func (driver VagrantDriver) Store() common.Storage {
+	return driver.store
 }
 
 // Returns "vagrant" always
 func (driver VagrantDriver) Name() string {
 	return driver.name
+}
+
+// Checks if the driver is supported
+func (driver VagrantDriver) IsSupported() bool {
+	_, err := exec.LookPath("vagrant")
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // Stores a Vagrant box into the dataset
@@ -41,16 +53,16 @@ func (driver VagrantDriver) Add(entry common.EnvironmentEntry) error {
 		return errors.New("Directories are not supported, pass the Vagrantfile's full path")
 	}
 
-	return driver.Store.Append(entry)
+	return driver.store.Append(entry)
 }
 
 // Deletes a Vagrant box from the dataset
 // can fail on any storage failure (e.g. disk failure)
 func (driver VagrantDriver) Remove(entry common.EnvironmentEntry) error {
-	return driver.Store.Remove(entry)
+	return driver.store.Remove(entry)
 }
 
-// Returns environment variables for Vagrant entry
+// Returns environment variables for Vagrant entry,
 // can fail if Vagrant box is not running, or while retrieving box's ip
 func (driver VagrantDriver) Env(entry common.EnvironmentEntryWithState) (map[string]*string, error) {
 	if *entry.State != "running" {
@@ -77,10 +89,10 @@ func (driver VagrantDriver) Env(entry common.EnvironmentEntryWithState) (map[str
 	return env, nil
 }
 
-// Lists all Vagrant boxes you added
+// Lists all Vagrant boxes you added,
 // can fail while retrieving Vagrant box status
 func (driver VagrantDriver) List() ([]common.EnvironmentEntryWithState, error) {
-	data, err := driver.Store.Load()
+	data, err := driver.store.Load()
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +158,6 @@ func getVagrantState(location string) (string, error) {
 func NewDriver(store common.Storage) common.Driver {
 	return &VagrantDriver{
 		name:  "vagrant",
-		Store: store,
+		store: store,
 	}
 }
