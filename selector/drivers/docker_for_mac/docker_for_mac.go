@@ -2,6 +2,7 @@
 package docker_for_mac
 
 import "errors"
+import "os"
 import "github.com/fmenezes/docker-set/selector/common"
 
 // Holds common.Driver interface implementation for Docker for Mac
@@ -12,6 +13,14 @@ type DockerForMacDriver struct {
 // Returns "docker-for-mac" always
 func (driver DockerForMacDriver) Name() string {
 	return driver.name
+}
+
+// Checks if the driver is supported
+func (driver DockerForMacDriver) IsSupported() bool {
+	if _, err := os.Stat("/Applications/Docker.app"); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 // Returns environment variables for Docker for Mac

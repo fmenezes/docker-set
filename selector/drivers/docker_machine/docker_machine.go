@@ -31,6 +31,15 @@ func (driver DockerMachineDriver) Name() string {
 	return driver.name
 }
 
+// Checks if the driver is supported
+func (driver DockerMachineDriver) IsSupported() bool {
+	_, err := exec.LookPath("docker-machine")
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func getMachineDetails(machineName string) (dockerMachineDetails, error) {
 	cmd := exec.Command("docker-machine", "inspect", machineName, "-f", "{\"DOCKER_TLS_VERIFY\":{{.HostOptions.EngineOptions.TlsVerify}},\"DOCKER_CERT_PATH\":\"{{.HostOptions.AuthOptions.StorePath}}\"}")
 	output, err := cmd.Output()
@@ -79,7 +88,7 @@ func getMachineEnv(machineName string) (dockerMachineEnv, error) {
 	}, nil
 }
 
-// Returns environment variables for docker-machine entry, similar to 'docker-machine env name'
+// Returns environment variables for docker-machine entry, similar to 'docker-machine env name',
 // can fail if docker-machine is not running
 func (driver DockerMachineDriver) Env(entry common.EnvironmentEntryWithState) (map[string]*string, error) {
 	if *entry.State != "Running" {
