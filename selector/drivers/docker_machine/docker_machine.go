@@ -4,8 +4,8 @@ package docker_machine
 import "os/exec"
 import "encoding/json"
 import "encoding/csv"
-import "bytes"
 import "fmt"
+import "io"
 import "strings"
 import "errors"
 import "github.com/fmenezes/docker-set/selector/common"
@@ -125,33 +125,50 @@ func (driver DockerMachineDriver) Remove(entry common.EnvironmentEntry) error {
 }
 
 // Lists docker-machine boxes, similar to 'docker-machine ls'
-func (driver DockerMachineDriver) List() ([]common.EnvironmentEntryWithState, error) {
-	cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}}")
+func (driver DockerMachineDriver) List() <-chan common.EnvironmentEntryWithState {
+	list := make(chan common.EnvironmentEntryWithState)
 
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
+	go func(c chan common.EnvironmentEntryWithState) {
+		cmd := exec.Command("docker-machine", "ls", "-f", "{{.Name}},{{.State}}")
 
-	r := csv.NewReader(bytes.NewReader(output))
-	r.FieldsPerRecord = -1
-	records, err := r.ReadAll()
-	if err != nil {
-		return nil, err
-	}
+		defer close(c)
 
-	machines := make([]common.EnvironmentEntryWithState, 0)
-	for _, record := range records {
-		machines = append(machines, common.EnvironmentEntryWithState{
-			EnvironmentEntry: common.EnvironmentEntry{
-				Name:   record[0],
-				Driver: driver.name,
-			},
-			State: &record[1],
-		})
-	}
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			panic(err)
+		}
 
-	return machines, nil
+		err = cmd.Start()
+		if err != nil {
+			panic(err)
+		}
+
+		r := csv.NewReader(stdout)
+		r.FieldsPerRecord = -1
+		for {
+			record, err := r.Read()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				panic(err)
+			}
+			c <- common.EnvironmentEntryWithState{
+				EnvironmentEntry: common.EnvironmentEntry{
+					Name:   record[0],
+					Driver: driver.name,
+				},
+				State: &record[1],
+			}
+		}
+
+		err = cmd.Wait()
+		if err != nil {
+			panic(err)
+		}
+	}(list)
+
+	return list
 }
 
 // Returns an instance of DockerMachineDriver struct

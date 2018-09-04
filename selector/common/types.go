@@ -10,7 +10,7 @@ type Driver interface {
 	// Removes the envionment passed from the storage
 	Remove(EnvironmentEntry) error
 	// Lists all environments from this driver
-	List() ([]EnvironmentEntryWithState, error)
+	List() <-chan EnvironmentEntryWithState
 	// Returns environment variables that need to be set
 	Env(EnvironmentEntryWithState) (map[string]*string, error)
 	// Checks if the driver is supported

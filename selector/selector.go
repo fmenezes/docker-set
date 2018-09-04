@@ -2,6 +2,7 @@
 package selector
 
 import "fmt"
+import "sync"
 import "os"
 
 import "github.com/fmenezes/docker-set/selector/common"
@@ -85,11 +86,7 @@ func (s Selector) Add(entry common.EnvironmentEntry) error {
 }
 
 func (s Selector) existsEntry(name string) (bool, error) {
-	list, err := s.List()
-	if err != nil {
-		return false, err
-	}
-	for _, item := range list {
+	for item := range s.List() {
 		if item.Name == name {
 			return true, nil
 		}
@@ -98,11 +95,7 @@ func (s Selector) existsEntry(name string) (bool, error) {
 }
 
 func (s Selector) findEntry(name string) (*common.EnvironmentEntryWithState, error) {
-	list, err := s.List()
-	if err != nil {
-		return nil, err
-	}
-	for _, item := range list {
+	for item := range s.List() {
 		if item.Name == name {
 			return &item, nil
 		}
@@ -148,20 +141,35 @@ func (s Selector) Remove(entry string) error {
 	return selectedDriver.Remove(found.EnvironmentEntry)
 }
 
-// Retrieves a list of all environments,
-// can fail when issuing driver list
-func (s Selector) List() ([]common.EnvironmentEntryWithState, error) {
-	list := make([]common.EnvironmentEntryWithState, 0)
+func mergeChans(in ...<-chan common.EnvironmentEntryWithState) <-chan common.EnvironmentEntryWithState {
+	out := make(chan common.EnvironmentEntryWithState)
+	var wg sync.WaitGroup
+	wg.Add(len(in))
 
-	for _, driver := range s.drivers {
-		entryList, err := driver.List()
-		if err != nil {
-			return nil, err
-		}
-		if entryList != nil {
-			list = append(list, entryList...)
-		}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	for _, c := range in {
+		go func(input <-chan common.EnvironmentEntryWithState) {
+			for entry := range input {
+				out <- entry
+			}
+			wg.Done()
+		}(c)
 	}
 
-	return list, nil
+	return out
+}
+
+// Retrieves a list of all environments,
+// can fail when issuing driver list
+func (s Selector) List() <-chan common.EnvironmentEntryWithState {
+	driverListChannels := make([]<-chan common.EnvironmentEntryWithState, 0)
+	for _, driver := range s.drivers {
+		driverListChannels = append(driverListChannels, driver.List())
+	}
+
+	return mergeChans(driverListChannels...)
 }
