@@ -44,6 +44,23 @@ $ docker-set rm test
 Done
 ```
 
+### 5. Starts a vm from the list
+
+```sh
+$ docker-set start test
+
+Done
+```
+
+
+### 6. Stops a vm from the list
+
+```sh
+$ docker-set stop test
+
+Done
+```
+
 ## Notes
 - When adding or removing a vagrant machine a file named `$HOME/.docker-set` will be stored.
 
