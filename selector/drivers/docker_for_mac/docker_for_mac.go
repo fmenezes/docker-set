@@ -37,6 +37,16 @@ func (driver DockerForMacDriver) Env(entry common.EnvironmentEntryWithState) (ma
 }
 
 // Not Supported
+func (driver DockerForMacDriver) Start(entry common.EnvironmentEntry) error {
+	return errors.New("Not Supported")
+}
+
+// Not Supported
+func (driver DockerForMacDriver) Stop(entry common.EnvironmentEntry) error {
+	return errors.New("Not Supported")
+}
+
+// Not Supported
 func (driver DockerForMacDriver) Remove(entry common.EnvironmentEntry) error {
 	return errors.New("Not Supported")
 }
