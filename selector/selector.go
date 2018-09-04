@@ -85,6 +85,34 @@ func (s Selector) Add(entry common.EnvironmentEntry) error {
 	return selectedDriver.Add(entry)
 }
 
+// Starts the environment,
+// can fail when issuing underlying driver command
+func (s Selector) Start(entry string) error {
+	found, err := s.findEntry(entry)
+	if err != nil {
+		return err
+	}
+	selectedDriver, err := s.selectDriver(found.Driver)
+	if err != nil {
+		return err
+	}
+	return selectedDriver.Start(found.EnvironmentEntry)
+}
+
+// Stops the environment,
+// can fail when issuing underlying driver command
+func (s Selector) Stop(entry string) error {
+	found, err := s.findEntry(entry)
+	if err != nil {
+		return err
+	}
+	selectedDriver, err := s.selectDriver(found.Driver)
+	if err != nil {
+		return err
+	}
+	return selectedDriver.Stop(found.EnvironmentEntry)
+}
+
 func (s Selector) existsEntry(name string) (bool, error) {
 	for item := range s.List() {
 		if item.Name == name {

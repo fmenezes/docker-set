@@ -5,6 +5,10 @@ package common
 type Driver interface {
 	// Returns the name of the driver
 	Name() string
+	// Starts the environment
+	Start(EnvironmentEntry) error
+	// Stops the environment
+	Stop(EnvironmentEntry) error
 	// Stores the envionment passed
 	Add(EnvironmentEntry) error
 	// Removes the envionment passed from the storage

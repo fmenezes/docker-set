@@ -37,6 +37,40 @@ func (driver VagrantDriver) IsSupported() bool {
 	return true
 }
 
+// Starts the vagrant box
+func (driver VagrantDriver) Start(entry common.EnvironmentEntry) error {
+	if entry.Location == nil || len(*entry.Location) == 0 {
+		return fmt.Errorf("No location provided")
+	}
+
+	cmd := exec.Command("vagrant", "up")
+	cmd.Dir = path.Dir(*entry.Location)
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Stops the vagrant box
+func (driver VagrantDriver) Stop(entry common.EnvironmentEntry) error {
+	if entry.Location == nil || len(*entry.Location) == 0 {
+		return fmt.Errorf("No location provided")
+	}
+
+	cmd := exec.Command("vagrant", "halt")
+	cmd.Dir = path.Dir(*entry.Location)
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Stores a Vagrant box into the dataset
 // can fail on any storage failure (e.g. disk failure)
 func (driver VagrantDriver) Add(entry common.EnvironmentEntry) error {

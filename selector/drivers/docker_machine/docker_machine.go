@@ -40,6 +40,30 @@ func (driver DockerMachineDriver) IsSupported() bool {
 	return true
 }
 
+// Starts the docker-machine vm
+func (driver DockerMachineDriver) Start(entry common.EnvironmentEntry) error {
+	cmd := exec.Command("docker-machine", "start", entry.Name)
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Stops the docker-machine vm
+func (driver DockerMachineDriver) Stop(entry common.EnvironmentEntry) error {
+	cmd := exec.Command("docker-machine", "stop", entry.Name)
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getMachineDetails(machineName string) (dockerMachineDetails, error) {
 	cmd := exec.Command("docker-machine", "inspect", machineName, "-f", "{\"DOCKER_TLS_VERIFY\":{{.HostOptions.EngineOptions.TlsVerify}},\"DOCKER_CERT_PATH\":\"{{.HostOptions.AuthOptions.StorePath}}\"}")
 	output, err := cmd.Output()
