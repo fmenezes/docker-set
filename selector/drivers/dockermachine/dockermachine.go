@@ -1,5 +1,5 @@
-// docker_machine package contains docker-machine driver implementation
-package docker_machine
+// dockermachine package contains docker-machine driver implementation
+package dockermachine
 
 import "os/exec"
 import "encoding/json"

@@ -6,8 +6,8 @@ import "sync"
 import "os"
 
 import "github.com/fmenezes/docker-set/selector/common"
-import "github.com/fmenezes/docker-set/selector/drivers/docker_for_mac"
-import "github.com/fmenezes/docker-set/selector/drivers/docker_machine"
+import "github.com/fmenezes/docker-set/selector/drivers/dockerformac"
+import "github.com/fmenezes/docker-set/selector/drivers/dockermachine"
 import "github.com/fmenezes/docker-set/selector/drivers/vagrant"
 import "github.com/fmenezes/docker-set/selector/storage"
 
@@ -23,12 +23,12 @@ func NewSelector() (*Selector, error) {
 		drivers: make([]common.Driver, 0),
 	}
 
-	dockerForMacDriver := docker_for_mac.NewDriver()
+	dockerForMacDriver := dockerformac.NewDriver()
 	if dockerForMacDriver.IsSupported() {
 		selector.registerDriver(dockerForMacDriver)
 	}
 
-	dockerMachineDriver := docker_machine.NewDriver()
+	dockerMachineDriver := dockermachine.NewDriver()
 	if dockerMachineDriver.IsSupported() {
 		selector.registerDriver(dockerMachineDriver)
 	}

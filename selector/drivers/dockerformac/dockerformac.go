@@ -1,5 +1,5 @@
-// docker_for_mac package contains Docker for Mac driver implementation
-package docker_for_mac
+// dockerformac package contains Docker for Mac driver implementation
+package dockerformac
 
 import "errors"
 import "os"
