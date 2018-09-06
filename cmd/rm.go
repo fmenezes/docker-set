@@ -2,34 +2,28 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
-	"github.com/fmenezes/docker-set/selector"
+	"github.com/fmenezes/docker-set/selector/common"
 	"github.com/spf13/cobra"
 )
 
-// rmCmd represents the rm command
-var rmCmd = &cobra.Command{
-	Use:   "rm [name]",
-	Short: "Removes an environment entry",
-	Long: `Removes an environment entry from the list. Example:
-
-docker-set rm test`,
-	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		sel, err := selector.NewSelector()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = sel.Remove(args[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Done")
-	},
+func newRemoveCmd(sel common.Selector) *cobra.Command {
+	return &cobra.Command{
+		Use:     "rm name",
+		Short:   "Removes an environment entry",
+		Example: "docker-set rm test",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runRemove(sel, args)
+		},
+	}
 }
 
-func init() {
-	rootCmd.AddCommand(rmCmd)
+func runRemove(sel common.Selector, args []string) error {
+	err := sel.Remove(args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done")
+	return nil
 }
