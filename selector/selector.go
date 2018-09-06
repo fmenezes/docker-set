@@ -6,10 +6,6 @@ import "sync"
 import "os"
 
 import "github.com/fmenezes/docker-set/selector/common"
-import "github.com/fmenezes/docker-set/selector/drivers/dockerformac"
-import "github.com/fmenezes/docker-set/selector/drivers/dockermachine"
-import "github.com/fmenezes/docker-set/selector/drivers/vagrant"
-import "github.com/fmenezes/docker-set/selector/storage"
 
 // Holds all methods to manage environments
 type Selector struct {
@@ -18,34 +14,14 @@ type Selector struct {
 
 // Returns a new instance of the selector,
 // can fail on when trying to create storage.FileStorage
-func NewSelector() (*Selector, error) {
-	selector := Selector{
+func NewSelector() *Selector {
+	return &Selector{
 		drivers: make([]common.Driver, 0),
 	}
-
-	dockerForMacDriver := dockerformac.NewDriver()
-	if dockerForMacDriver.IsSupported() {
-		selector.registerDriver(dockerForMacDriver)
-	}
-
-	dockerMachineDriver := dockermachine.NewDriver()
-	if dockerMachineDriver.IsSupported() {
-		selector.registerDriver(dockerMachineDriver)
-	}
-
-	file, err := storage.GetFilePath()
-	if err != nil {
-		return nil, err
-	}
-	vagrantDriver := vagrant.NewDriver(storage.NewFileStorage(file))
-	if vagrantDriver.IsSupported() {
-		selector.registerDriver(vagrantDriver)
-	}
-
-	return &selector, nil
 }
 
-func (s *Selector) registerDriver(driver common.Driver) {
+// Adds driver to selector
+func (s *Selector) RegisterDriver(driver common.Driver) {
 	s.drivers = append(s.drivers, driver)
 }
 
@@ -59,7 +35,7 @@ func (s Selector) selectDriver(driver string) (common.Driver, error) {
 	}
 
 	if selectedDriver == nil {
-		return nil, fmt.Errorf("Driver %s not supported", driver)
+		return nil, fmt.Errorf("Driver '%s' is not supported", driver)
 	}
 
 	return *selectedDriver, nil
@@ -192,7 +168,6 @@ func mergeChans(in ...<-chan common.EnvironmentEntryWithState) <-chan common.Env
 }
 
 // Retrieves a list of all environments,
-// can fail when issuing driver list
 func (s Selector) List() <-chan common.EnvironmentEntryWithState {
 	driverListChannels := make([]<-chan common.EnvironmentEntryWithState, 0)
 	for _, driver := range s.drivers {

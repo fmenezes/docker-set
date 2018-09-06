@@ -1,6 +1,26 @@
 // common package contains structs used in selector package
 package common
 
+// Holds all methods to manage environments
+type Selector interface {
+	// Adds driver to selector
+	RegisterDriver(driver Driver)
+	// Retrieves environment variables for given name,
+	Env(entry string) (map[string]*string, error)
+	// Retrieves a list of all environments,
+	List() <-chan EnvironmentEntryWithState
+	// Retrieves name of selected environment
+	Selected() *string
+	// Appends new environment into store
+	Add(entry EnvironmentEntry) error
+	// Removes from store the entry corresponding given name
+	Remove(entry string) error
+	// Starts the environment
+	Start(entry string) error
+	// Stops the environment
+	Stop(entry string) error
+}
+
 // Interface defining a driver for docker environment
 type Driver interface {
 	// Returns the name of the driver

@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/fmenezes/docker-set/selector"
 	"github.com/fmenezes/docker-set/selector/common"
 	"github.com/spf13/cobra"
 )
@@ -17,37 +15,36 @@ type activeEntry struct {
 	Active bool
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists all environments",
-	Args:  cobra.ExactArgs(0),
-	Run: func(cmd *cobra.Command, args []string) {
-		sel, err := selector.NewSelector()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		tmpl, err := template.New("main").Parse("{{if .Active}}*{{end}}\t{{.Name}}\t{{.Driver}}\t{{if not .State}}Unknown{{else}}{{.State}}{{end}}\n")
-		if err != nil {
-			log.Fatal(err)
-		}
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-		fmt.Fprintln(w, "ACTIVE\tNAME\tDRIVER\tSTATE")
-
-		selected := ""
-		if sel.Selected() != nil {
-			selected = *sel.Selected()
-		}
-		for entry := range sel.List() {
-			tmpl.Execute(w, activeEntry{
-				EnvironmentEntryWithState: entry,
-				Active: selected == entry.Name,
-			})
-		}
-		w.Flush()
-	},
+func newListCmd(sel common.Selector) *cobra.Command {
+	return &cobra.Command{
+		Use:     "list",
+		Short:   "Lists all environments",
+		Example: "docker-set list",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runList(sel, args)
+		},
+	}
 }
 
-func init() {
-	rootCmd.AddCommand(listCmd)
+func runList(sel common.Selector, args []string) error {
+	tmpl, err := template.New("main").Parse("{{if .Active}}*{{end}}\t{{.Name}}\t{{.Driver}}\t{{if not .State}}Unknown{{else}}{{.State}}{{end}}\n")
+	if err != nil {
+		return err
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	fmt.Fprintln(w, "ACTIVE\tNAME\tDRIVER\tSTATE")
+
+	selected := ""
+	if sel.Selected() != nil {
+		selected = *sel.Selected()
+	}
+	for entry := range sel.List() {
+		tmpl.Execute(w, activeEntry{
+			EnvironmentEntryWithState: entry,
+			Active: selected == entry.Name,
+		})
+	}
+	w.Flush()
+	return nil
 }
