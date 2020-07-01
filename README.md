@@ -1,3 +1,7 @@
+# :warning: ABANDONED :warning:
+
+With the advancements of Docker for Mac I see no reason to keep switching between Docker for Mac and Docker Toolbox is no longer needed.
+
 # docker-set
 docker-set is a simple tool to switch between docker environments, virtual machines and docker for mac.
 
